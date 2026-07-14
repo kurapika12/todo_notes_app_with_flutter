@@ -50,8 +50,8 @@ lib/
 
 ```bash
 # Clone repository
-git clone https://github.com/username/todo_notes_app.git
-cd todo_notes_app
+git clone https://github.com/username/todo_notes_app_with_flutter.git
+cd todo_notes_app_with_flutter
 
 # Install dependencies
 flutter pub get
