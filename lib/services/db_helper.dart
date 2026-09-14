@@ -18,7 +18,7 @@ class DBHelper {
     final path = join(await getDatabasesPath(), 'todo_notes.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE todos(
@@ -34,7 +34,15 @@ class DBHelper {
             title TEXT,
             content TEXT,
             colorIndex INTEGER DEFAULT 0,
+            isPinned INTEGER DEFAULT 0,
+            sortOrder INTEGER DEFAULT 0,
             updatedAt TEXT
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE settings(
+            key TEXT PRIMARY KEY,
+            value TEXT
           )
         ''');
       },
@@ -44,7 +52,45 @@ class DBHelper {
             'ALTER TABLE notes ADD COLUMN colorIndex INTEGER DEFAULT 0',
           );
         }
+        if (oldVersion < 3) {
+          await db.execute('''
+            CREATE TABLE settings(
+              key TEXT PRIMARY KEY,
+              value TEXT
+            )
+          ''');
+        }
+        if (oldVersion < 4) {
+          await db.execute(
+            'ALTER TABLE notes ADD COLUMN isPinned INTEGER DEFAULT 0',
+          );
+          await db.execute(
+            'ALTER TABLE notes ADD COLUMN sortOrder INTEGER DEFAULT 0',
+          );
+        }
       },
+    );
+  }
+
+  Future<String?> getSetting(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'settings',
+      where: 'key = ?',
+      whereArgs: [key],
+    );
+    if (result.isNotEmpty) {
+      return result.first['value'] as String?;
+    }
+    return null;
+  }
+
+  Future<void> saveSetting(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'settings',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 }

@@ -3,6 +3,8 @@ class Note {
   String title;
   String content;
   int colorIndex; // index warna label, merujuk ke AppTheme.noteLabelColors
+  bool isPinned;
+  int sortOrder;
   DateTime updatedAt;
 
   Note({
@@ -10,6 +12,8 @@ class Note {
     required this.title,
     required this.content,
     this.colorIndex = 0,
+    this.isPinned = false,
+    this.sortOrder = 0,
     required this.updatedAt,
   });
 
@@ -18,6 +22,8 @@ class Note {
     'title': title,
     'content': content,
     'colorIndex': colorIndex,
+    'isPinned': isPinned ? 1 : 0,
+    'sortOrder': sortOrder,
     'updatedAt': updatedAt.toIso8601String(),
   };
 
@@ -26,6 +32,8 @@ class Note {
     title: map['title'],
     content: map['content'],
     colorIndex: map['colorIndex'] ?? 0,
+    isPinned: (map['isPinned'] ?? 0) == 1,
+    sortOrder: map['sortOrder'] ?? 0,
     updatedAt: DateTime.parse(map['updatedAt']),
   );
 }

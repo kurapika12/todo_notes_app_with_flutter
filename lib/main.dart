@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..loadTheme()),
         ChangeNotifierProvider(create: (_) => TodoProvider()..loadTodos()),
         ChangeNotifierProvider(create: (_) => NoteProvider()..loadNotes()),
       ],

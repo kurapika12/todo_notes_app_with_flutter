@@ -15,6 +15,7 @@ class NoteScreen extends StatefulWidget {
 
 class _NoteScreenState extends State<NoteScreen> {
   String _query = '';
+  int? _selectedColorFilter;
 
   void _openEditor(BuildContext context, {Note? note}) {
     final titleController = TextEditingController(text: note?.title ?? '');
@@ -115,8 +116,9 @@ class _NoteScreenState extends State<NoteScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: contentController,
-                      maxLines: 6,
-                      minLines: 4,
+                      maxLines: null,
+                      minLines: 5,
+                      keyboardType: TextInputType.multiline,
                       style: const TextStyle(fontSize: 15, height: 1.4),
                       decoration: InputDecoration(
                         hintText: 'Tulis catatan kamu di sini...',
@@ -256,8 +258,13 @@ class _NoteScreenState extends State<NoteScreen> {
     final noteProvider = context.watch<NoteProvider>();
     final notes = noteProvider.notes.where((n) {
       final q = _query.toLowerCase();
-      return n.title.toLowerCase().contains(q) ||
+      final matchesQuery =
+          q.isEmpty ||
+          n.title.toLowerCase().contains(q) ||
           n.content.toLowerCase().contains(q);
+      final matchesColor =
+          _selectedColorFilter == null || n.colorIndex == _selectedColorFilter;
+      return matchesQuery && matchesColor;
     }).toList();
 
     return Scaffold(
@@ -273,6 +280,41 @@ class _NoteScreenState extends State<NoteScreen> {
               ),
             ),
           ),
+          SizedBox(
+            height: 48,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                FilterChip(
+                  label: const Text('Semua'),
+                  selected: _selectedColorFilter == null,
+                  onSelected: (selected) {
+                    setState(() => _selectedColorFilter = null);
+                  },
+                ),
+                ...List.generate(AppTheme.noteLabelColors.length, (i) {
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: FilterChip(
+                      avatar: CircleAvatar(
+                        backgroundColor: AppTheme.noteLabelColors[i],
+                        radius: 8,
+                      ),
+                      label: Text('Warna ${i + 1}'),
+                      selected: _selectedColorFilter == i,
+                      onSelected: (selected) {
+                        setState(
+                          () => _selectedColorFilter = selected ? i : null,
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
           Expanded(
             child: notes.isEmpty
                 ? Center(
@@ -282,14 +324,22 @@ class _NoteScreenState extends State<NoteScreen> {
                           : 'Catatan tidak ditemukan.',
                     ),
                   )
-                : ListView.builder(
+                : ReorderableListView.builder(
                     padding: const EdgeInsets.only(top: 4, bottom: 80),
                     itemCount: notes.length,
+                    // Gunakan callback ini untuk menstabilkan urutan tanpa error tipe data
+                    onReorder: (oldIndex, newIndex) {
+                      noteProvider.reorderNotes(oldIndex, newIndex);
+                    },
                     itemBuilder: (context, index) {
                       final note = notes[index];
                       return NoteCard(
+                        key: ValueKey(
+                          note.id,
+                        ), // Key sangat penting untuk reordering!
                         note: note,
                         onTap: () => _openEditor(context, note: note),
+                        onPin: () => noteProvider.togglePin(note.id),
                         onDelete: () async {
                           final confirmed = await showConfirmDialog(
                             context,

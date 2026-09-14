@@ -157,13 +157,66 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   Widget build(BuildContext context) {
     final todoProvider = context.watch<TodoProvider>();
-    final todos = todoProvider.todos
+    final allTodos = todoProvider.todos;
+    final totalCount = allTodos.length;
+    final completedCount = allTodos.where((t) => t.isDone).length;
+    final progress = totalCount == 0 ? 0.0 : completedCount / totalCount;
+
+    final todos = allTodos
         .where((t) => t.title.toLowerCase().contains(_query.toLowerCase()))
         .toList();
 
     return Scaffold(
       body: Column(
         children: [
+          if (allTodos.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Progres Tugas',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '$completedCount dari $totalCount selesai',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 8,
+                        backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: TextField(
